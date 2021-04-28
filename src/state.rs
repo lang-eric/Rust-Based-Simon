@@ -115,8 +115,8 @@ impl SimpleState for MyState {
             if event.event_type == UiEventType::ClickStop{
                 //let mut WriteStorageUITransform = world.write_storage::<UiTransform>();
 
-
-                println!("Clicked on button: {:?}", world.read_storage::<UiTransform>().get(event.target).unwrap().id);
+                let get_element_from_storage= world.read_storage::<UiTransform>().get(event.target).unwrap();
+                println!("Clicked on button: {:?}",get_element_from_storage.id);
                 // WriteStorageUITransform.get_mut(event.target).unwrap().local_x += 4.0;
                 // the above causes rendy crash when the button is pressed, but we want to instead of incrasing the hieght of the button,
                 // change the color, which is hard because the color exists in the UIimage stored by the UIButton,
