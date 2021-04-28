@@ -12,7 +12,7 @@ use amethyst::{
 };
 
 use log::info;
-use amethyst::ui::{Interactable, get_default_font, FontAsset};
+use amethyst::ui::Interactable;
 
 /// A dummy game state that shows 3 sprites.
 pub struct MyState;
@@ -48,7 +48,7 @@ impl SimpleState for MyState {
             Anchor::Middle,                // anchor
             Anchor::Middle,                // pivot
             50f32,                          // x
-            0f32,                          // y
+            75f32,                          // y
             0f32,                          // z
             200f32,                        // width
             200f32,                         // height
@@ -58,7 +58,7 @@ impl SimpleState for MyState {
             Anchor::Middle,                // anchor
             Anchor::Middle,                // pivot
             30f32,                          // x
-            0f32,                          // y
+            69f32,                          // y
             0f32,                          // z
             200f32,                        // width
             200f32,                         // height
@@ -103,11 +103,6 @@ impl SimpleState for MyState {
             LineMode::Single,              // line mode
             Anchor::Middle,                // alignment
         );
-               let font_handle = {
-                       let loader = resources.get::<DefaultLoader>();
-                       let font_storage = resources.get::<AssetStorage<FontAsset>>();
-                       get_default_font(&loader, &font_storage)
-                   };
 
         let c_ui_text = UiText::new(
             world.read_resource::<Loader>().load(
@@ -120,7 +115,7 @@ impl SimpleState for MyState {
             [1.0, 0.0, 1.0, 0.5],          // color
             250f32,                         // font_size
             LineMode::Single,              // line mode
-            Anchor::BottomLeft,                // alignment
+            Anchor::Middle,                // alignment
         );
 
         /* Building the entity */
