@@ -42,7 +42,28 @@ impl SimpleState for MyState {
         // Load our sprites and display them
         let sprites = load_sprites(world);
         init_sprites(world, &sprites, &dimensions);
+        let button = UiButtonBuilder::<(), u32>::new("RUSTY".to_string())
+            .with_id(666)
+            .with_font_size(12.0)
+            .with_position(64.0, -64.0)
+            .with_size(64.0 * 3.0, 64.0)
+            .with_hover_image(UiImage::SolidColor([0.1, 0.1, 0.1, 0.5]))
+            .with_layer(12.0)
+            .build_from_world(&world);
 
+        world.insert(button);
+        let button = UiButtonBuilder::<(), u32>::new("RUST".to_string())
+            .with_id(666)
+            .with_font_size(12.0)
+            .with_position(64.0, -64.0)
+            .with_size(64.0 * 3.0, 64.0)
+            .with_anchor(Anchor::TopMiddle)
+
+            .with_hover_image(UiImage::SolidColor([0.1, 0.1, 0.1, 0.5]))
+            .with_layer(12.0)
+            .build_from_world(&world);
+
+        world.insert(button);
         create_ui_example(world);
     }
 
@@ -138,8 +159,8 @@ fn load_sprites(world: &mut World) -> Vec<SpriteRender> {
 fn init_sprites(world: &mut World, sprites: &[SpriteRender], dimensions: &ScreenDimensions) {
     for (i, sprite) in sprites.iter().enumerate() {
         // Center our sprites around the center of the window
-        let x = (i as f32 - 1.) * 100. + dimensions.width() * 0.5;
-        let y = (i as f32 - 1.) * 100. + dimensions.height() * 0.5;
+        let x = (i as f32 - 1.) * 100. + dimensions.width() * 0.8;
+        let y = (i as f32 - 1.) * 100. + dimensions.height() * 0.8;
         let mut transform = Transform::default();
         transform.set_translation_xyz(x, y, 0.);
 
@@ -177,7 +198,7 @@ pub fn create_ui_example(world: &mut World) {
     // This simply loads a font from the asset folder and puts it in the world as a resource,
     // we also get a ref to the font that we then can pass to the text label we crate later.
     let font: FontHandle = world.read_resource::<Loader>().load(
-        "fonts/Bangers-Regular.ttf",
+        "fonts/COMIC.TTF",
         TtfFormat,
         (),
         &world.read_resource(),
@@ -199,7 +220,7 @@ pub fn create_ui_example(world: &mut World) {
         ))
         .with(UiText::new(
             font,
-            "Hello, Amethyst UI!".to_string(),
+            "Rust is hard.".to_string(),
             [1., 1., 1., 1.],
             30.,
             LineMode::Single,
