@@ -39,96 +39,23 @@ impl SimpleState for MyState {
 
         // Place the camera
         init_camera(world, &dimensions);
+        // this co-ordinate system is wacky.
+        // for y, it seems to first priortize anchor type? and than use the coordinate as an offset?
+        let square_size = 600.0;
+        let padding = 50.0;
+        //set color for button A
+        let mut color = [0.2, 0.1, 0.5, 0.2];
+        let mut hover_color = [0.2, 0.1, 0.0, 0.5];
+        make_our_button(world, (-1.0 * square_size) -padding, 0.0,  square_size, square_size, "A",color,hover_color); // these don't only make, they also add.
+        //set color for button B
+        let mut color = [0.0, 0.0, 0.8, 0.5];
+        let mut hover_color = [0.2, 0.1, 0.0, 0.5];
+        make_our_button(world,  0.0, 0.0,  square_size, square_size, "B",color,hover_color);
+        //set color for button c
+        let mut color = [0.0, 0.7, 0.2, 0.5];
+        let mut hover_color = [0.2, 0.1, 0.0, 0.5];
+        make_our_button(world, (1.0 * square_size) + padding, 0.0,  square_size, square_size, "C",color,hover_color);
 
-        // Load our sprites and display them
-        //let sprites = load_sprites(world);
-        //init_sprites(world, &sprites, &dimensions);
-        let a = UiTransform::new(
-            String::from("A"), // id
-            Anchor::Middle,                // anchor
-            Anchor::Middle,                // pivot
-            50f32,                          // x
-            75f32,                          // y
-            0f32,                          // z
-            200f32,                        // width
-            200f32,                         // height
-        );
-        let b = UiTransform::new(
-            String::from("B"), // id
-            Anchor::Middle,                // anchor
-            Anchor::Middle,                // pivot
-            30f32,                          // x
-            69f32,                          // y
-            0f32,                          // z
-            200f32,                        // width
-            200f32,                         // height
-        );
-        let c = UiTransform::new(
-            String::from("C"), // id
-            Anchor::Middle,                // anchor
-            Anchor::Middle,         // pivot
-            0f32,                          // x
-            0f32,                          // y
-            0f32,                          // z
-            200f32,                        // width
-            200f32,                         // height
-        );
-
-        let a_ui_text = UiText::new(
-            world.read_resource::<Loader>().load(
-                "fonts/COMIC.TTF",
-                TtfFormat,
-                (),
-                &world.read_resource(),
-            ),                   // font
-            String::from("A"), // text
-            [1.0, 1.0, 0.0, 0.5],          // color
-            250f32,                         // font_size
-            LineMode::Single,              // line mode
-            Anchor::Middle,                // alignment
-        );
-        // This simply loads a font from the asset folder and puts it in the world as a resource,
-        // we also get a ref to the font that we then can pass to the text label we crate later.
-
-        let b_ui_text = UiText::new(
-            world.read_resource::<Loader>().load(
-                "fonts/COMIC.TTF",
-                TtfFormat,
-                (),
-                &world.read_resource(),
-            ),                   // font
-            String::from("B"), // text
-            [0.0, 1.0, 1.0, 0.5],          // color
-            250f32,                         // font_size
-            LineMode::Single,              // line mode
-            Anchor::Middle,                // alignment
-        );
-
-        let c_ui_text = UiText::new(
-            world.read_resource::<Loader>().load(
-                "fonts/COMIC.TTF",
-                TtfFormat,
-                (),
-                &world.read_resource(),
-            ),                   // font
-            String::from("C"), // text
-            [1.0, 0.0, 1.0, 0.5],          // color
-            250f32,                         // font_size
-            LineMode::Single,              // line mode
-            Anchor::Middle,                // alignment
-        );
-
-        /* Building the entity */
-        let _ = world.create_entity()
-            .with(a)
-            .with(a_ui_text)
-            .with(b)
-            .with(b_ui_text)
-            .with(c)
-            .with(c_ui_text)
-            .with(Interactable)
-
-            .build();
     }
 
     /// The following events are handled:
@@ -159,18 +86,32 @@ impl SimpleState for MyState {
         Trans::None
     }
 }
+fn make_our_button(world: &mut World, x: f32, y: f32, height:f32, width:f32, button_text: &str, color: [f32; 4], hover_color: [f32; 4]){
+    // Load our sprites and display them
+    //let sprites = load_sprites(world);
+    //init_sprites(world, &sprites, &dimensions);
+    let (_button_id, _label) =
+        UiButtonBuilder::<(), u32>::new(button_text.to_string())
+            .with_font_size(100.0)
+            .with_position(x, y)
+            .with_size(width, height)
+            .with_anchor(Anchor::Middle)
+            .with_image(UiImage::SolidColor(color))
+            .with_hover_image(UiImage::SolidColor(hover_color))
+            .build_from_world(&world);
 
+}
 /// Creates a camera entity in the `world`.
 ///
 /// The `dimensions` are used to center the camera in the middle
 /// of the screen, as well as make it cover the entire screen.
-fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
+fn init_camera(world: &mut World, dimensions: &ScreenDimensions){
     let mut transform = Transform::default();
     transform.set_translation_xyz(dimensions.width() * 0.5, dimensions.height() * 0.5, 1.);
-
+    let camera = Camera::standard_2d(dimensions.width(), dimensions.height());
     world
         .create_entity()
-        .with(Camera::standard_2d(dimensions.width(), dimensions.height()))
+        .with(camera)
         .with(transform)
         .build();
 }
