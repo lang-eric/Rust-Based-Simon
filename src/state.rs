@@ -12,6 +12,7 @@ use amethyst::{
 };
 
 use log::info;
+use amethyst::ui::{Interactable, get_default_font, FontAsset};
 
 /// A dummy game state that shows 3 sprites.
 pub struct MyState;
@@ -40,31 +41,99 @@ impl SimpleState for MyState {
         init_camera(world, &dimensions);
 
         // Load our sprites and display them
-        let sprites = load_sprites(world);
-        init_sprites(world, &sprites, &dimensions);
-        let button = UiButtonBuilder::<(), u32>::new("RUSTY".to_string())
-            .with_id(666)
-            .with_font_size(12.0)
-            .with_position(64.0, -64.0)
-            .with_size(64.0 * 3.0, 64.0)
-            .with_hover_image(UiImage::SolidColor([0.1, 0.1, 0.1, 0.5]))
-            .with_layer(12.0)
-            .build_from_world(&world);
+        //let sprites = load_sprites(world);
+        //init_sprites(world, &sprites, &dimensions);
+        let a = UiTransform::new(
+            String::from("A"), // id
+            Anchor::Middle,                // anchor
+            Anchor::Middle,                // pivot
+            50f32,                          // x
+            0f32,                          // y
+            0f32,                          // z
+            200f32,                        // width
+            200f32,                         // height
+        );
+        let b = UiTransform::new(
+            String::from("B"), // id
+            Anchor::Middle,                // anchor
+            Anchor::Middle,                // pivot
+            30f32,                          // x
+            0f32,                          // y
+            0f32,                          // z
+            200f32,                        // width
+            200f32,                         // height
+        );
+        let c = UiTransform::new(
+            String::from("C"), // id
+            Anchor::Middle,                // anchor
+            Anchor::Middle,         // pivot
+            0f32,                          // x
+            0f32,                          // y
+            0f32,                          // z
+            200f32,                        // width
+            200f32,                         // height
+        );
 
-        world.insert(button);
-        let button = UiButtonBuilder::<(), u32>::new("RUST".to_string())
-            .with_id(666)
-            .with_font_size(12.0)
-            .with_position(64.0, -64.0)
-            .with_size(64.0 * 3.0, 64.0)
-            .with_anchor(Anchor::TopMiddle)
+        let a_ui_text = UiText::new(
+            world.read_resource::<Loader>().load(
+                "fonts/COMIC.TTF",
+                TtfFormat,
+                (),
+                &world.read_resource(),
+            ),                   // font
+            String::from("A"), // text
+            [1.0, 1.0, 0.0, 0.5],          // color
+            250f32,                         // font_size
+            LineMode::Single,              // line mode
+            Anchor::Middle,                // alignment
+        );
+        // This simply loads a font from the asset folder and puts it in the world as a resource,
+        // we also get a ref to the font that we then can pass to the text label we crate later.
 
-            .with_hover_image(UiImage::SolidColor([0.1, 0.1, 0.1, 0.5]))
-            .with_layer(12.0)
-            .build_from_world(&world);
+        let b_ui_text = UiText::new(
+            world.read_resource::<Loader>().load(
+                "fonts/COMIC.TTF",
+                TtfFormat,
+                (),
+                &world.read_resource(),
+            ),                   // font
+            String::from("B"), // text
+            [0.0, 1.0, 1.0, 0.5],          // color
+            250f32,                         // font_size
+            LineMode::Single,              // line mode
+            Anchor::Middle,                // alignment
+        );
+               let font_handle = {
+                       let loader = resources.get::<DefaultLoader>();
+                       let font_storage = resources.get::<AssetStorage<FontAsset>>();
+                       get_default_font(&loader, &font_storage)
+                   };
 
-        world.insert(button);
-        create_ui_example(world);
+        let c_ui_text = UiText::new(
+            world.read_resource::<Loader>().load(
+                "fonts/COMIC.TTF",
+                TtfFormat,
+                (),
+                &world.read_resource(),
+            ),                   // font
+            String::from("C"), // text
+            [1.0, 0.0, 1.0, 0.5],          // color
+            250f32,                         // font_size
+            LineMode::Single,              // line mode
+            Anchor::BottomLeft,                // alignment
+        );
+
+        /* Building the entity */
+        let _ = world.create_entity()
+            .with(a)
+            .with(a_ui_text)
+            .with(b)
+            .with(b_ui_text)
+            .with(c)
+            .with(c_ui_text)
+            .with(Interactable)
+
+            .build();
     }
 
     /// The following events are handled:
@@ -175,56 +244,56 @@ fn init_sprites(world: &mut World, sprites: &[SpriteRender], dimensions: &Screen
             .build();
     }
 }
-
-/// Creates a simple UI background and a UI text label
-/// This is the pure code only way to create UI with amethyst.
-pub fn create_ui_example(world: &mut World) {
-    // this creates the simple gray background UI element.
-    let ui_background = world
-        .create_entity()
-        .with(UiImage::SolidColor([0.6, 0.1, 0.2, 1.0]))
-        .with(UiTransform::new(
-            "".to_string(),
-            Anchor::TopLeft,
-            Anchor::TopLeft,
-            30.0,
-            -30.,
-            0.,
-            250.,
-            50.,
-        ))
-        .build();
-
-    // This simply loads a font from the asset folder and puts it in the world as a resource,
-    // we also get a ref to the font that we then can pass to the text label we crate later.
-    let font: FontHandle = world.read_resource::<Loader>().load(
-        "fonts/COMIC.TTF",
-        TtfFormat,
-        (),
-        &world.read_resource(),
-    );
-
-    // This creates the actual label and places it on the screen.
-    // Take note of the z position given, this ensures the label gets rendered above the background UI element.
-    world
-        .create_entity()
-        .with(UiTransform::new(
-            "".to_string(),
-            Anchor::TopLeft,
-            Anchor::TopLeft,
-            40.0,
-            -40.,
-            1.,
-            200.,
-            50.,
-        ))
-        .with(UiText::new(
-            font,
-            "Rust is hard.".to_string(),
-            [1., 1., 1., 1.],
-            30.,
-            LineMode::Single,
-            Anchor::TopLeft,
-        ))
-        .build();
-}
+//
+// /// Creates a simple UI background and a UI text label
+// /// This is the pure code only way to create UI with amethyst.
+// pub fn create_ui_example(world: &mut World) {
+//     // this creates the simple gray background UI element.
+//     let ui_background = world
+//         .create_entity()
+//         .with(UiImage::SolidColor([0.6, 0.1, 0.2, 1.0]))
+//         .with(UiTransform::new(
+//             "".to_string(),
+//             Anchor::TopLeft,
+//             Anchor::TopLeft,
+//             30.0,
+//             -30.,
+//             0.,
+//             250.,
+//             50.,
+//         ))
+//         .build();
+//
+//     // This simply loads a font from the asset folder and puts it in the world as a resource,
+//     // we also get a ref to the font that we then can pass to the text label we crate later.
+//     let font: FontHandle = world.read_resource::<Loader>().load(
+//         "fonts/COMIC.TTF",
+//         TtfFormat,
+//         (),
+//         &world.read_resource(),
+//     );
+//
+//     // This creates the actual label and places it on the screen.
+//     // Take note of the z position given, this ensures the label gets rendered above the background UI element.
+//     world
+//         .create_entity()
+//         .with(UiTransform::new(
+//             "".to_string(),
+//             Anchor::TopLeft,
+//             Anchor::TopLeft,
+//             40.0,
+//             -40.,
+//             1.,
+//             200.,
+//             50.,
+//         ))
+//         .with(UiText::new(
+//             font,
+//             "Rust is hard.".to_string(),
+//             [1., 1., 1., 1.],
+//             30.,
+//             LineMode::Single,
+//             Anchor::TopLeft,
+//         ))
+//         .build();
+//}
