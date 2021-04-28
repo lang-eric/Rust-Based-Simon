@@ -11,8 +11,9 @@ use amethyst::{
     window::ScreenDimensions,
 };
 
+use amethyst::core::ecs::Entity;
+use amethyst::ui::{Interactable, UiButton, UiButtonSystem, UiFinder, UiEvent, UiEventType};
 use log::info;
-use amethyst::ui::Interactable;
 
 /// A dummy game state that shows 3 sprites.
 pub struct MyState;
@@ -41,21 +42,48 @@ impl SimpleState for MyState {
         init_camera(world, &dimensions);
         // this co-ordinate system is wacky.
         // for y, it seems to first priortize anchor type? and than use the coordinate as an offset?
-        let square_size = 600.0;
-        let padding = 50.0;
+        let square_size = 400.0;
+        let padding = 100.0;
         //set color for button A
         let mut color = [0.2, 0.1, 0.5, 0.2];
-        let mut hover_color = [0.2, 0.1, 0.0, 0.5];
-        make_our_button(world, (-1.0 * square_size) -padding, 0.0,  square_size, square_size, "A",color,hover_color); // these don't only make, they also add.
-        //set color for button B
-        let mut color = [0.0, 0.0, 0.8, 0.5];
-        let mut hover_color = [0.2, 0.1, 0.0, 0.5];
-        make_our_button(world,  0.0, 0.0,  square_size, square_size, "B",color,hover_color);
-        //set color for button c
-        let mut color = [0.0, 0.7, 0.2, 0.5];
-        let mut hover_color = [0.2, 0.1, 0.0, 0.5];
-        make_our_button(world, (1.0 * square_size) + padding, 0.0,  square_size, square_size, "C",color,hover_color);
+        let mut hover_color = [0.7, 0.1, 0.0, 0.5];
 
+        let button_a = make_our_button(
+            world,
+            (-1.0 * square_size) - padding,
+            -100.0,
+            square_size,
+            square_size,
+            "A",
+            color,
+            hover_color,0
+        ); // these don't only make, they also add.
+           //set color for button B
+        color = [0.0, 0.0, 0.8, 0.5];
+        let button_b = make_our_button(
+            world,
+            0.0,
+            0.0,
+            square_size,
+            square_size,
+            "B",
+            color,
+            hover_color,
+            1
+        );
+        //set color for button c
+        color = [0.0, 0.7, 0.2, 0.5];
+        let button_c = make_our_button(
+            world,
+            (1.0 * square_size) + padding,
+            100.0,
+            square_size,
+            square_size,
+            "C",
+            color,
+            hover_color,
+            2
+        );
     }
 
     /// The following events are handled:
@@ -63,7 +91,7 @@ impl SimpleState for MyState {
     /// - Any other keypress is simply logged to the console.
     fn handle_event(
         &mut self,
-        mut _data: StateData<'_, GameData<'_, '_>>,
+        mut data: StateData<'_, GameData<'_, '_>>,
         event: StateEvent,
     ) -> SimpleTrans {
         if let StateEvent::Window(event) = &event {
@@ -81,39 +109,59 @@ impl SimpleState for MyState {
             // including key bindings and gamepad support, please have a look at
             // https://book.amethyst.rs/stable/pong-tutorial/pong-tutorial-03.html#capturing-user-input
         }
+        let world = data.world;
+
+        if let StateEvent::Ui(event) = &event {
+            if event.event_type == UiEventType::ClickStop{
+                //let mut WriteStorageUITransform = world.write_storage::<UiTransform>();
+
+
+                println!("Clicked on button: {:?}", world.read_storage::<UiTransform>().get(event.target).unwrap().id);
+                // WriteStorageUITransform.get_mut(event.target).unwrap().local_x += 4.0;
+                // the above causes rendy crash when the button is pressed, but we want to instead of incrasing the hieght of the button,
+                // change the color, which is hard because the color exists in the UIimage stored by the UIButton,
+                // which is stored in the Widget.
+            }
+        }
 
         // Keep going
         Trans::None
     }
 }
-fn make_our_button(world: &mut World, x: f32, y: f32, height:f32, width:f32, button_text: &str, color: [f32; 4], hover_color: [f32; 4]){
+fn make_our_button(
+    world: &mut World,
+    x: f32,
+    y: f32,
+    height: f32,
+    width: f32,
+    button_text: &str,
+    color: [f32; 4],
+    hover_color: [f32; 4],
+    id: u32
+) -> UiButton {
     // Load our sprites and display them
     //let sprites = load_sprites(world);
     //init_sprites(world, &sprites, &dimensions);
-    let (_button_id, _label) =
-        UiButtonBuilder::<(), u32>::new(button_text.to_string())
-            .with_font_size(100.0)
-            .with_position(x, y)
-            .with_size(width, height)
-            .with_anchor(Anchor::Middle)
-            .with_image(UiImage::SolidColor(color))
-            .with_hover_image(UiImage::SolidColor(hover_color))
-            .build_from_world(&world);
-
+    let (_button_id, button) = UiButtonBuilder::<(), u32>::new(button_text.to_string())
+        .with_font_size(100.0)
+        .with_position(x, y)
+        .with_size(width, height)
+        .with_anchor(Anchor::Middle)
+        .with_image(UiImage::SolidColor(color))
+        .with_id(id)
+        .with_hover_image(UiImage::SolidColor(hover_color))
+        .build_from_world(&world);
+    return button;
 }
 /// Creates a camera entity in the `world`.
 ///
 /// The `dimensions` are used to center the camera in the middle
 /// of the screen, as well as make it cover the entire screen.
-fn init_camera(world: &mut World, dimensions: &ScreenDimensions){
+fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(dimensions.width() * 0.5, dimensions.height() * 0.5, 1.);
     let camera = Camera::standard_2d(dimensions.width(), dimensions.height());
-    world
-        .create_entity()
-        .with(camera)
-        .with(transform)
-        .build();
+    world.create_entity().with(camera).with(transform).build();
 }
 
 /// Loads and splits the `logo.png` image asset into 3 sprites,
@@ -180,6 +228,7 @@ fn init_sprites(world: &mut World, sprites: &[SpriteRender], dimensions: &Screen
             .build();
     }
 }
+
 //
 // /// Creates a simple UI background and a UI text label
 // /// This is the pure code only way to create UI with amethyst.
