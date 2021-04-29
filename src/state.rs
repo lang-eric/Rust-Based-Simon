@@ -62,17 +62,6 @@ impl SimpleState for PlayState {
         let mut color = [0.2, 0.1, 0.5, 0.2];
         let mut hover_color = [0.7, 0.1, 0.0, 0.5];
 
-        let label = make_our_button(
-            world,
-            0.0 ,
-            500.0,
-            square_size/2.0,
-            square_size * 6.0,
-            "GAME TEXT HERE",
-            color,
-            hover_color,4
-        );
-
         let button_a = make_our_button(
             world,
             (-1.0 * square_size) - padding,
@@ -109,6 +98,8 @@ impl SimpleState for PlayState {
             hover_color,
             2
         );
+
+
     }
 
     /// The following events are handled:
@@ -137,33 +128,41 @@ impl SimpleState for PlayState {
         let world = data.world;
 
         if let StateEvent::Ui(event) = &event {
-            if event.event_type == UiEventType::ClickStop{
+            if event.event_type == UiEventType::Click{
+                //let mut WriteStorageUITransform = world.write_storage::<UiTransform>();
 
-                
-                let read_ui_transform = world.read_storage::<UiTransform>();
-                let button = read_ui_transform.get(event.target).unwrap();
-
+                let buttons =  world.read_storage::<UiTransform>();
+                let button = buttons.get(event.target).unwrap();
                 println!("Clicked on button: {:?}",button.id);
-                if button.id < 4 {
-                    let mut image = world.write_storage::<UiImage>();
-                    let color = [0.0, 2.0, 0.0, 0.0];
+                let mut image = world.write_storage::<UiImage>();
+                let color = [0.0, 0.0, 0.0, 0.0];
+                image.insert(event.target, UiImage::SolidColor(color));
+                
 
-                    image.insert(event.target, UiImage::SolidColor(color));
+                let mut press : Option<char> = None;
+                if button.id == "1_btn"{
+                    press = Some('A');
                 }
-                else{
-                    let mut image = world.write_storage::<UiText>();
-
-                    image.insert(
-                        event.target,
-                        UiText::new((), "YEET".to_string(), [1.0,1.0,0.0,0.0], 80.0, LineMode::Single, Anchor::TopLeft)
-                    );
+                else if button.id == "2_btn"{
+                    press = Some('B');
+                }
+                else if button.id == "3_btn"{
+                    press = Some('C');
                 }
 
+                match press {
+                    Some(c) => self.pattern.push(c),
+                    None => {}
+                }
 
-                // WriteStorageUITransform.get_mut(event.target).unwrap().local_x += 4.0;
-                // the above causes rendy crash when the button is pressed, but we want to instead of incrasing the hieght of the button,
-                // change the color, which is hard because the color exists in the UIimage stored by the UIButton,
-                // which is stored in the Widget.
+                if self.pattern.len() == self.entered.len(){
+                    if(self.pattern == self.entered){
+                        return Trans::Push(Box::new(ShowState::new(Message::Win)));
+                    }
+                    else {
+                        return Trans::Push(Box::new(ShowState::new(Message::Loss)));
+                    }
+                }
             }
         }
 
@@ -272,7 +271,7 @@ fn init_sprites(world: &mut World, sprites: &[SpriteRender], dimensions: &Screen
     }
 }
 
-enum Message {
+pub enum Message {
     Welcome, 
     Win,
     Loss
@@ -285,14 +284,16 @@ enum Showing {
 }
 
 
-struct ShowState{
+pub struct ShowState{
     timer: Option<f32>,
     message : String,
     showing : Showing,
-    pattern : Vec<char>
+    pattern : Vec<char>,
+    button : Option<UiButton>
 }
+
 fn gen_pattern(size : u32) -> Vec<char> {
-    let pattern = vec![];
+    let mut pattern = vec![];
     let mut rng = rand::thread_rng();
 
     for _ in 0..size{
@@ -307,7 +308,7 @@ fn gen_pattern(size : u32) -> Vec<char> {
     return pattern
 }
 impl ShowState{
-    fn new(m : Message) -> ShowState{
+    pub fn new(m : Message) -> ShowState{
         let message = match (m) {
             Message::Welcome => "welcome",
             Message::Win => "you win",
@@ -318,11 +319,40 @@ impl ShowState{
             timer : Some(1.0f32),
             message: String::from(message),
             showing :  Showing::Nothing,
-            pattern : gen_pattern(8)
+            pattern : gen_pattern(8),
+            button : None
         }
     }
 
+    fn replace_text(&mut self, world : &mut World, text : String){
+        let square_size = 400.0;
+            //set color for button A
+        let mut color = [0.2, 0.1, 0.5, 0.2];
+        let mut hover_color = [0.7, 0.1, 0.0, 0.5];
+        match self.button {
+            Some(_) => {
+                let button = self.button.take();
+                world.delete_entity(button.unwrap().text_entity);
+            },
+            _ => {}
+        }
+    
+        let label = make_our_button(
+                    world,
+                    0.0 ,
+                    500.0,
+                    square_size/2.0,
+                    square_size * 6.0,
+                    text.as_str(),
+                    color,
+                    hover_color,4
+                );
+        self.button = Some(label);
+    }
+
 }
+
+
 
 impl SimpleState for ShowState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
@@ -335,15 +365,20 @@ impl SimpleState for ShowState {
 
             // Place the camera
             init_camera(world, &dimensions);
-            // this co-ordinate system is wacky.
-            // for y, it seems to first priortize anchor type? and than use the coordinate as an offset?
+
+            
+       
     }
 
+    
+
+
     fn update(&mut self, state_data: &mut StateData<'_, GameData>) -> SimpleTrans {
+
         if let Some(mut timer) = self.timer.take() {
             // If the timer isn't expired yet, substract the time that passed since last update.
             {
-                let time = resources.get::<Time>().unwrap();
+                let time = state_data.world.read_resource::<Time>();
                 timer -= time.delta_time().as_secs_f32();
             }
             if timer <= 0.0 {
@@ -351,13 +386,19 @@ impl SimpleState for ShowState {
                     Showing::Nothing => {
                         self.timer.replace(3.0f32);
                         println!("showing the message");
+                        self.replace_text(state_data.world, self.message.clone());
+                        self.showing = Showing::Message;
                     },
                     Showing::Message => {
                         self.timer.replace(5.0f32);
                         println!("showing the showing the pattern");
+                        self.replace_text(state_data.world, self.pattern.iter().collect());
+                        self.showing = Showing::Pattern;
+
 
                     },
                     Showing::Pattern => {
+                        self.replace_text(state_data.world, String::from(""));
                         return Trans::Push(Box::new(PlayState::new(self.pattern.clone())));
                     }
                 }

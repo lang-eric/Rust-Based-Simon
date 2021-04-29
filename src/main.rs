@@ -1,5 +1,5 @@
 use amethyst::{
-    core::transform::TransformBundle,
+    core::{transform::TransformBundle, Time},
     input::{InputBundle, StringBindings},
     prelude::*,
     renderer::{
@@ -38,7 +38,7 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderFlat2D::default()),
         )?;
 
-    let mut game = Application::new(resources, state::PlayState::new(vec!['A', 'B', 'C']), game_data)?;
+    let mut game = Application::new(resources, state::ShowState::new(state::Message::Welcome), game_data)?;
     game.run();
 
     Ok(())
