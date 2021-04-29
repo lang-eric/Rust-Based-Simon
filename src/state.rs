@@ -128,7 +128,7 @@ impl SimpleState for PlayState {
         let world = data.world;
 
         if let StateEvent::Ui(event) = &event {
-            if event.event_type == UiEventType::Click{
+            if event.event_type == UiEventType::ClickStop{
                 //let mut WriteStorageUITransform = world.write_storage::<UiTransform>();
 
                 let buttons =  world.read_storage::<UiTransform>();
@@ -140,23 +140,25 @@ impl SimpleState for PlayState {
                 
 
                 let mut press : Option<char> = None;
-                if button.id == "1_btn"{
+
+                if button.id == "0_btn"{
                     press = Some('A');
                 }
-                else if button.id == "2_btn"{
+                else if button.id == "1_btn"{
                     press = Some('B');
                 }
-                else if button.id == "3_btn"{
+                else if button.id == "2_btn"{
                     press = Some('C');
                 }
 
                 match press {
-                    Some(c) => self.pattern.push(c),
+                    Some(c) => self.entered.push(c),
                     None => {}
                 }
 
                 if self.pattern.len() == self.entered.len(){
-                    if(self.pattern == self.entered){
+                    if self.pattern == self.entered {
+                        println!("What?");
                         return Trans::Push(Box::new(ShowState::new(Message::Win)));
                     }
                     else {
@@ -319,7 +321,7 @@ impl ShowState{
             timer : Some(1.0f32),
             message: String::from(message),
             showing :  Showing::Nothing,
-            pattern : gen_pattern(8),
+            pattern : gen_pattern(2),
             button : None
         }
     }
