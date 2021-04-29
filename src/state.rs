@@ -1,6 +1,6 @@
 use amethyst::{
     assets::{AssetStorage, Loader},
-    core::transform::Transform,
+    core::{Time, transform::Transform},
     input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
@@ -10,18 +10,29 @@ use amethyst::{
     },
     window::ScreenDimensions,
 };
+use rand::Rng;
+
 
 use amethyst::core::ecs::Entity;
 use amethyst::ui::{Interactable, UiButton, UiButtonSystem, UiFinder, UiEvent, UiEventType};
 use log::info;
 
 /// A dummy game state that shows 3 sprites.
-pub struct MyState;/* {
-   pattern :  Vec<u32>,
-   entered : Vec<u32>
-}*/
+pub struct PlayState {
+   pattern :  Vec<char>,
+   entered : Vec<char>
+}
 
-impl SimpleState for MyState {
+impl PlayState { 
+    pub fn new(pattern : Vec<char>) -> PlayState{
+        PlayState {
+            pattern,
+            entered : vec![]
+        }
+    }
+}
+
+impl SimpleState for PlayState {
     // Here, we define hooks that will be called throughout the lifecycle of our game state.
     //
     // In this example, `on_start` is used for initializing entities
@@ -236,6 +247,109 @@ fn init_sprites(world: &mut World, sprites: &[SpriteRender], dimensions: &Screen
             .with(transform)
             .build();
     }
+}
+
+enum Message {
+    Welcome, 
+    Win,
+    Loss
+}
+
+enum Showing {
+    Nothing,
+    Message,
+    Pattern
+}
+
+
+struct ShowState{
+    timer: Option<f32>,
+    message : String,
+    showing : Showing,
+    pattern : Vec<char>
+}
+fn gen_pattern(size : u32) -> Vec<char> {
+    let pattern = vec![];
+    let mut rng = rand::thread_rng();
+
+    for _ in 0..size{
+        let num = rng.gen_range(1..4);
+        match num {
+            1 => pattern.push('A'),
+            2 => pattern.push('B'),
+            _ => pattern.push('C')
+        }
+    }
+
+    return pattern
+}
+impl ShowState{
+    fn new(m : Message) -> ShowState{
+        let message = match (m) {
+            Message::Welcome => "welcome",
+            Message::Win => "you win",
+            Message::Loss => "you lose"
+        };
+
+        ShowState {
+            timer : Some(1.0f32),
+            message: String::from(message),
+            showing :  Showing::Nothing,
+            pattern : gen_pattern(8)
+        }
+    }
+
+}
+
+impl SimpleState for ShowState {
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+            let world = data.world;
+
+            // Get the screen dimensions so we can initialize the camera and
+            // place our sprites correctly later. We'll clone this since we'll
+            // pass the world mutably to the following functions.
+            let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
+
+            // Place the camera
+            init_camera(world, &dimensions);
+            // this co-ordinate system is wacky.
+            // for y, it seems to first priortize anchor type? and than use the coordinate as an offset?
+    }
+
+    fn update(&mut self, state_data: &mut StateData<'_, GameData>) -> SimpleTrans {
+        if let Some(mut timer) = self.timer.take() {
+            // If the timer isn't expired yet, substract the time that passed since last update.
+            {
+                let time = resources.get::<Time>().unwrap();
+                timer -= time.delta_time().as_secs_f32();
+            }
+            if timer <= 0.0 {
+                match self.showing {
+                    Showing::Nothing => {
+                        self.timer.replace(3.0f32);
+                        println!("showing the message");
+                    },
+                    Showing::Message => {
+                        self.timer.replace(5.0f32);
+                        println!("showing the showing the pattern");
+
+                    },
+                    Showing::Pattern => {
+                        return Trans::Push(Box::new(PlayState::new(self.pattern.clone())));
+                    }
+                }
+            } else {
+                // If timer is not expired yet, put it back onto the state.
+                self.timer.replace(timer);
+            }
+        }
+        Trans::None
+
+        
+        }
+
+
+
 }
 
 //

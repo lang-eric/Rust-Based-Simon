@@ -38,7 +38,7 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderFlat2D::default()),
         )?;
 
-    let mut game = Application::new(resources, state::MyState, game_data)?;
+    let mut game = Application::new(resources, state::PlayState::new(vec!['A', 'B', 'C']), game_data)?;
     game.run();
 
     Ok(())
