@@ -51,6 +51,17 @@ impl SimpleState for MyState {
         let mut color = [0.2, 0.1, 0.5, 0.2];
         let mut hover_color = [0.7, 0.1, 0.0, 0.5];
 
+        let label = make_our_button(
+            world,
+            0.0 ,
+            500.0,
+            square_size/2.0,
+            square_size * 6.0,
+            "GAME TEXT HERE",
+            color,
+            hover_color,4
+        );
+
         let button_a = make_our_button(
             world,
             (-1.0 * square_size) - padding,
@@ -116,15 +127,27 @@ impl SimpleState for MyState {
 
         if let StateEvent::Ui(event) = &event {
             if event.event_type == UiEventType::ClickStop{
-                //let mut WriteStorageUITransform = world.write_storage::<UiTransform>();
 
                 
-                let button = world.read_storage::<UiTransform>().get(event.target).unwrap();
+                let read_ui_transform = world.read_storage::<UiTransform>();
+                let button = read_ui_transform.get(event.target).unwrap();
+
                 println!("Clicked on button: {:?}",button.id);
-                let mut image = world.write_storage::<UiImage>();
-                let color = [0.0, 0.0, 0.0, 0.0];
-                image.insert(event.target, UiImage::SolidColor(color));
-                
+                if button.id < 4 {
+                    let mut image = world.write_storage::<UiImage>();
+                    let color = [0.0, 2.0, 0.0, 0.0];
+
+                    image.insert(event.target, UiImage::SolidColor(color));
+                }
+                else{
+                    let mut image = world.write_storage::<UiText>();
+
+                    image.insert(
+                        event.target,
+                        UiText::new((), "YEET".to_string(), [1.0,1.0,0.0,0.0], 80.0, LineMode::Single, Anchor::TopLeft)
+                    );
+                }
+
 
                 // WriteStorageUITransform.get_mut(event.target).unwrap().local_x += 4.0;
                 // the above causes rendy crash when the button is pressed, but we want to instead of incrasing the hieght of the button,
