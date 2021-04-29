@@ -16,7 +16,10 @@ use amethyst::ui::{Interactable, UiButton, UiButtonSystem, UiFinder, UiEvent, Ui
 use log::info;
 
 /// A dummy game state that shows 3 sprites.
-pub struct MyState;
+pub struct MyState;/* {
+   pattern :  Vec<u32>,
+   entered : Vec<u32>
+}*/
 
 impl SimpleState for MyState {
     // Here, we define hooks that will be called throughout the lifecycle of our game state.
@@ -115,8 +118,14 @@ impl SimpleState for MyState {
             if event.event_type == UiEventType::ClickStop{
                 //let mut WriteStorageUITransform = world.write_storage::<UiTransform>();
 
+                
+                let button = world.read_storage::<UiTransform>().get(event.target).unwrap();
+                println!("Clicked on button: {:?}",button.id);
+                let mut image = world.write_storage::<UiImage>();
+                let color = [0.0, 0.0, 0.0, 0.0];
+                image.insert(event.target, UiImage::SolidColor(color));
+                
 
-                println!("Clicked on button: {:?}", world.read_storage::<UiTransform>().get(event.target).unwrap().id);
                 // WriteStorageUITransform.get_mut(event.target).unwrap().local_x += 4.0;
                 // the above causes rendy crash when the button is pressed, but we want to instead of incrasing the hieght of the button,
                 // change the color, which is hard because the color exists in the UIimage stored by the UIButton,
